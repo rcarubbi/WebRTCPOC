@@ -14,14 +14,14 @@
     </div>
     <div class="col-md-6">
         <h2><span class="their-id">Contato</span></h2>
-        <p><video width="700"  id="their-video" autoplay class="their-video"></video></p>
+        <p><video width="700" id="their-video" autoplay class="their-video"></video></p>
     </div>
 </div>
 <div class="row">
     <div class="col-md-12">
         <div id="step1">
             <p>Por favor clique em 'permitir' no topo da tela para compartilhar sua camera e seu microfone para fazer chamadas</p>
-            <div id="step1-error"  style="display:none">
+            <div id="step1-error" style="display:none">
                 <p>Falha ao capturar camera e microfone</p>
                 <a href="#" id="step1-retry" class="button">Tente novamente</a>
             </div>
@@ -46,7 +46,8 @@
 
 
 @section scripts {
-    <script src="/signalr/hubs" type="text/javascript"></script>
     <script type="text/javascript" src="~/Scripts/peer.js"></script>
+    <script src="~/Scripts/WSVideoRecorder.js"></script>
+    <script src="~/Scripts/WSAudioRecorder.js"></script>
     <script type="text/javascript" src="~/Scripts/app.js"></script>
 }

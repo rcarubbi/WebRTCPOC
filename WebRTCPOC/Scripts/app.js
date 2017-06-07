@@ -1,7 +1,8 @@
-var recordServer = $.connection.webRTCHub;
+
 var localAudioRec,
     localVideoRec,
     localStream;
+var audioContext = new AudioContext;
 
 navigator.getWebcam = ( navigator.getUserMedia ||
                          navigator.webkitGetUserMedia ||
@@ -35,7 +36,7 @@ peer.on('call', function(call) {
 // Click handlers setup
 $(function () {
 
-    var audioContext = new AudioContext;
+   
 
 	$('#make-call').click(function() {
 		//Initiate a call!
@@ -48,7 +49,8 @@ $(function () {
 	$('#end-call').click(function (e) {
 	    e.preventDefault();
         if (window.existingCall)
-		window.existingCall.close();
+            window.existingCall.close();
+        stopRecord();
 		step2();
 	});
 
@@ -81,7 +83,8 @@ function step2() { //Adjust the UI
 function step3(call) {
 	// Hang up on an existing call if present
 	if (window.existingCall) {
-		window.existingCall.close();
+	    window.existingCall.close();
+	    stopRecord();
 	}
 
 	// Wait for stream on the call, then setup peer video
@@ -92,21 +95,29 @@ function step3(call) {
 
 	window.existingCall = call;
 	$('.their-id').text(call.peer);
-	call.on('close', step2);
+	call.on('close', function () { step2(); stopRecord(); });
 	$('#step1, #step2').hide();
 	$('#step3').show();
 }
  
-
+var videoRecordTask, audioRecordTask;
 function beginRecord(id)
 {
-    $.connection.hub.start().done(function () {
-        localVideoRec = new WSVideoRecorder(window.localStream, chat.server, id);
-	    setTimeout(function () { localVideoRec.record(); }, 500);
-	    var input = audioContext.createMediastreamSource(window.localStream);
-	    localAudioRec = new WSAudioRecorder(input, chat.server, id);
-	    setTimeout(function () { localAudioRec.record(); }, 500);
-    });
+    var videoWebsocketUri =  "ws://" + window.location.hostname + ":" + window.location.port + "/api/WebRTCVideoRecord";
+    localVideoRec = new WSVideoRecorder(window.localStream, videoWebsocketUri, id);
+    while (!localVideoRec.ready) { }
+    setTimeout(function () { localVideoRec.record(); }, 500);
+    var audioWebsocketUri = "ws://" + window.location.hostname + ":" + window.location.port + "/api/WebRTCAudioRecord";
+    var input = audioContext.createMediaStreamSource(window.localStream);
+    localAudioRec = new WSAudioRecorder(input, audioWebsocketUri, id);
+    while (!localAudioRec.ready) { }
+    setTimeout(function () { localAudioRec.record(); }, 500);
+}
+ 
+function stopRecord()
+{
+    localVideoRec.stop();
+    localAudioRec.stop();
 }
 
 
