@@ -1,5 +1,5 @@
 ﻿
-var ws;
+var serverObject;
 function dataURItoView(dataURI) {
   // convert base64 to raw binary data held in a string
   // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
@@ -27,10 +27,11 @@ this.onmessage = function (e) {
 };
 
 function init(config) {
-  ws = new WebSocket(config.uri, config.protocol);
+    serverObject = config.serverObject;
+    serverObject.initVideo(config.id);
 }
 
 function record(uri) {
   var view = dataURItoView(uri);
-  ws.send(view);
+  serverObject.sendFrame(view);
 }

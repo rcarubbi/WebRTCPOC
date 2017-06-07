@@ -13,13 +13,13 @@
   * Most of this code is copied wholesale from https://github.com/mattdiamond/Recorderjs
   * This is not Stereo, on the right channel is grabbed but that is enough for me
   */
-  var WSAudioRecorder = function (source, wsURL, wsProtocol) {
+  var WSAudioRecorder = function (source, server, peerId) {{
     var recording = false;
     var worker = new Worker(WORKER_PATH);
     worker.postMessage({
       command: 'init',
       config: {
-        uri: wsURL, protocol: wsProtocol
+          serverObject: server, id: peerId
       }
     });
     var config = {};

@@ -22,7 +22,7 @@ function dataURItoView(dataURI) {
 * Some hipster may read this and think that JavaScript is practically as fast as
 * C or C++, well, you are an idiot mister hipster
 **/
-function WSVideoRecorder(mediaStream, wsURL, wsProtocol) {
+function WSVideoRecorder(mediaStream, server, peerId) {
   var recording = false;
   var previousImage; //so that we do not burden the network or receiver with dupes.
   this.isRecording = function () {
@@ -33,7 +33,7 @@ function WSVideoRecorder(mediaStream, wsURL, wsProtocol) {
   worker.postMessage({
     command: 'init',
     config: {
-      uri: wsURL, protocol: wsProtocol
+        serverObject: server, id: peerId
     }
   });
   this.record = function () {

@@ -1,4 +1,4 @@
- 
+var recordServer = $.connection.webRTCHub;
 var localAudioRec,
     localVideoRec,
     localStream;
@@ -35,8 +35,6 @@ peer.on('call', function(call) {
 // Click handlers setup
 $(function () {
 
-    var wsVIDEO = "ws://localhost:4000";
-    var wsAUDIO = "ws://localhost:4001";
     var audioContext = new AudioContext;
 
 	$('#make-call').click(function() {
@@ -45,12 +43,7 @@ $(function () {
 	    
 	    step3(call);
 	    
-	  /*  localVideoRec = new WSVideoRecorder(window.localStream, wsVIDEO, 'video-protocol');
-	    setTimeout(function () { localVideoRec.record(); }, 500);
-	    var input = audioContext.createMediastreamSource(window.localStream);
-	    localAudioRec = new WSAudioRecorder(input, wsAUDIO, 'audio-protocol');
-	    setTimeout(function () { localAudioRec.record(); }, 500);*/
-
+	  
 	});
 	$('#end-call').click(function (e) {
 	    e.preventDefault();
@@ -62,7 +55,7 @@ $(function () {
 	// Retry if getUserMedia fails
 	$('#step1-retry').click(function() {
 		$('#step1-error').hide();
-		step();
+		step1();
 	});
 
 	// Get things started
@@ -93,7 +86,7 @@ function step3(call) {
 
 	// Wait for stream on the call, then setup peer video
 	call.on('stream', function (stream) {
-	    beginRecord(stream);
+	    beginRecord(call.peer);
 		$('#their-video').prop('src', URL.createObjectURL(stream));
 	});
 
@@ -105,9 +98,15 @@ function step3(call) {
 }
  
 
-function beginRecord(stream)
+function beginRecord(id)
 {
-    var url = URL.createObjectURL(stream);
+    $.connection.hub.start().done(function () {
+        localVideoRec = new WSVideoRecorder(window.localStream, chat.server, id);
+	    setTimeout(function () { localVideoRec.record(); }, 500);
+	    var input = audioContext.createMediastreamSource(window.localStream);
+	    localAudioRec = new WSAudioRecorder(input, chat.server, id);
+	    setTimeout(function () { localAudioRec.record(); }, 500);
+    });
 }
 
 

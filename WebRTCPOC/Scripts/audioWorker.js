@@ -1,4 +1,4 @@
-﻿var ws;
+﻿var serverObject;
 
 this.onmessage = function (e) {
   switch (e.data.command) {
@@ -12,9 +12,10 @@ this.onmessage = function (e) {
 };
 
 function init(config) {
-  ws = new WebSocket(config.uri, config.protocol);
+    serverObject = config.serverObject;
+    serverObject.initAudio(config.id);
 }
 
 function record(samples) {
-  ws.send(samples);
+  serverObject.sendSamples(samples);
 }
