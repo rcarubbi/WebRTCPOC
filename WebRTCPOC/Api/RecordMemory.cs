@@ -1,9 +1,7 @@
 ﻿using Accord.Video.FFMPEG;
-using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Web;
 
 namespace WebRTCPOC.Api
@@ -31,11 +29,11 @@ namespace WebRTCPOC.Api
         }
 
 
-        public static void AppendAudioFrame(string id, byte[] sample)
+        public static void AddAudio(string id, string filename)
         {
             lock (writers[id])
             {
-                writers[id].WriteAudioFrame(sample);
+                writers[id].WriteAudioFrame(File.ReadAllBytes(filename));
             }
         }
         public static void CreateWriter(string id)

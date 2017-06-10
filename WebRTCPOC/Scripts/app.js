@@ -103,17 +103,21 @@ function step3(call) {
 var videoRecordTask, audioRecordTask;
 function beginRecord(id)
 {
-    var videoWebsocketUri =  "ws://" + window.location.hostname + ":" + window.location.port + "/api/WebRTCVideoRecord";
-    localVideoRec = new WSVideoRecorder(window.localStream, videoWebsocketUri, id);
-    while (!localVideoRec.ready) { }
-    setTimeout(function () { localVideoRec.record(); }, 500);
-    var audioWebsocketUri = "ws://" + window.location.hostname + ":" + window.location.port + "/api/WebRTCAudioRecord";
+    var videoWebsocketUri =  "wss://" + window.location.hostname + ":" + (window.location.port || "443") + "/api/WebRTCVideoRecord";
+    localVideoRec = new WSVideoRecorder(window.localStream, videoWebsocketUri, id, videoReady);
+   
+    var audioWebsocketUri = "wss://" + window.location.hostname + ":" + (window.location.port || "443") + "/api/WebRTCAudioRecord";
     var input = audioContext.createMediaStreamSource(window.localStream);
-    localAudioRec = new WSAudioRecorder(input, audioWebsocketUri, id);
-    while (!localAudioRec.ready) { }
-    setTimeout(function () { localAudioRec.record(); }, 500);
+    localAudioRec = new WSAudioRecorder(input, audioWebsocketUri, id, audioReady);
 }
  
+function videoReady() {
+    setTimeout(function () { localVideoRec.record(); }, 500);
+}
+function audioReady() {
+    setTimeout(function () { localAudioRec.record(); }, 500);
+}
+
 function stopRecord()
 {
     localVideoRec.stop();

@@ -1,8 +1,5 @@
-﻿using Accord.Video.FFMPEG;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.WebSockets;
@@ -18,7 +15,8 @@ namespace WebRTCPOC.Api
     public class WebRTCAudioRecordController : ApiController
     {
         private string _id;
-
+        private string _audioFilename;
+        BinaryWriter _writer;
         public HttpResponseMessage Get()
         {
             if (HttpContext.Current.IsWebSocketRequest)
@@ -41,7 +39,7 @@ namespace WebRTCPOC.Api
                     {
                         await ReceiveIdAsync(socket);
                         idReceived = true;
-                        RecordMemory.CreateWriter(_id);
+                        _writer = new BinaryWriter(new FileStream(_audioFilename, FileMode.CreateNew, FileAccess.Write));
                     }
                     else
                     {
@@ -54,6 +52,10 @@ namespace WebRTCPOC.Api
                 }
                 else
                 {
+                    _writer.Close();
+                    _writer.Dispose();
+                    _writer = null;
+                    RecordMemory.AddAudio(_id, _audioFilename);
                     RecordMemory.CloseWriter(_id);
                     break;
                 }
@@ -64,18 +66,14 @@ namespace WebRTCPOC.Api
         {
             try
             {
-
-                List<byte[]> sample = new List<byte[]>();
                 WebSocketReceiveResult result = null;
                 do
                 {
                     ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[4096]);
                     result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-                    sample.Add(buffer.Array);
+                    _writer.Write(buffer.Array, 0, buffer.Array.Length);
+                    
                 } while (!result.EndOfMessage);
-
-                byte[] samples = sample.SelectMany(x => x).ToArray();
-                RecordMemory.AppendAudioFrame(_id, samples);
             }
             catch (Exception ex)
             {
@@ -88,6 +86,7 @@ namespace WebRTCPOC.Api
             ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[1024]);
             WebSocketReceiveResult result = await socket.ReceiveAsync(buffer, CancellationToken.None);
             _id = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
+            _audioFilename = Path.Combine(HttpContext.Current.Server.MapPath("~/records"), $"{_id}.wav");
             buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes("Id-Received"));
             await socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
         }

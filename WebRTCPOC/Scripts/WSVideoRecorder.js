@@ -22,23 +22,21 @@ function dataURItoView(dataURI) {
 * Some hipster may read this and think that JavaScript is practically as fast as
 * C or C++, well, you are an idiot mister hipster
 **/
-function WSVideoRecorder(mediaStream, wsURL, peerId) {
+function WSVideoRecorder(mediaStream, wsURL, peerId, readyCallback) {
     var recording = false;
-    var ready = false;
+     
     var previousImage; //so that we do not burden the network or receiver with dupes.
     this.isRecording = function () {
         return recording
     }
 
-    this.ready = function () {
-        return ready;
-    }
+    
     var config = {};
     var worker = new Worker(config.workerPath || WORKER_PATH);
     worker.onmessage = function (msg) {
         if (msg === "Id-Received")
         {
-            ready = true;
+            readyCallback();
         }
     };
 

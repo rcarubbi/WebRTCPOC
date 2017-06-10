@@ -17,13 +17,13 @@
     * Most of this code is copied wholesale from https://github.com/mattdiamond/Recorderjs
     * This is not Stereo, on the right channel is grabbed but that is enough for me
     */
-    var WSAudioRecorder = function (source, wsURL, peerId) {
+    var WSAudioRecorder = function (source, wsURL, peerId, readyCallback) {
         var recording = false;
-        var ready = false;
+        
         var worker = new Worker(WORKER_PATH);
         worker.onmessage = function (msg) {
             if (msg === "Id-Received") {
-                ready = true;
+                readyCallback();
             }
         };
         worker.postMessage({
@@ -34,10 +34,7 @@
         });
         var config = {};
         var bufferLen = 4096;
-
-        this.ready = function () {
-            return ready;
-        }
+ 
 
         this.context = source.context;
         this.node = (this.context.createScriptProcessor ||
