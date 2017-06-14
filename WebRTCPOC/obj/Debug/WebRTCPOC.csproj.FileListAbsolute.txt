@@ -115,3 +115,4 @@ C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\postproc-52.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\swresample-0.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\swscale-2.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\obj\Debug\WebRTCPOC.csprojResolveAssemblyReference.cache
+C:\Users\AB1177493\Source\Repos\WebRTCPOC\WebRTCPOC\obj\Debug\WebRTCPOC.csprojResolveAssemblyReference.cache

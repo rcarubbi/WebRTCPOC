@@ -17,6 +17,7 @@ namespace WebRTCPOC.Api
         private string _id;
         private string _audioFilename;
         BinaryWriter _writer;
+        FileStream _stream;
         public HttpResponseMessage Get()
         {
             if (HttpContext.Current.IsWebSocketRequest)
@@ -39,7 +40,8 @@ namespace WebRTCPOC.Api
                     {
                         await ReceiveIdAsync(socket);
                         idReceived = true;
-                        _writer = new BinaryWriter(new FileStream(_audioFilename, FileMode.CreateNew, FileAccess.Write));
+                        _stream = new FileStream(_audioFilename, FileMode.CreateNew, FileAccess.Write);
+                        _writer = new BinaryWriter(_stream);
                     }
                     else
                     {
@@ -71,7 +73,7 @@ namespace WebRTCPOC.Api
                 {
                     ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[4096]);
                     result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-                    _writer.Write(buffer.Array, 0, buffer.Array.Length);
+                    _writer.Write(buffer.Array);
                     
                 } while (!result.EndOfMessage);
             }
