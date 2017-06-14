@@ -1,4 +1,4 @@
-﻿var ws;
+﻿var audioWs;
 
 this.onmessage = function (e) {
     switch (e.data.command) {
@@ -15,13 +15,13 @@ this.onmessage = function (e) {
 };
 
 function init(config) {
-    ws = new WebSocket(config.uri, "audio-protocol");
-    ws.onmessage = function (msg) {
+    audioWs = new WebSocket(config.uri, "audio-protocol");
+    audioWs.onmessage = function (msg) {
         if (msg.data == "Id-Received")
             postMessage(msg.data);
     }
-    ws.onopen = function () {
-        ws.send(config.peerId);
+    audioWs.onopen = function () {
+        audioWs.send(config.peerId);
     };
 
 
@@ -29,9 +29,9 @@ function init(config) {
 
 function record(samples) {
 
-    ws.send(samples);
+    audioWs.send(samples);
 }
 
 function stop() {
-    ws.close();
+    audioWs.close();
 }

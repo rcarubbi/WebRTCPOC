@@ -4,14 +4,14 @@
 
     var WORKER_PATH = 'scripts/audioWorker.js';
 
-    function convertFloat32ToInt16(buffer) {
-        l = buffer.length;
-        buf = new Int16Array(l);
-        while (l--) {
-            buf[l] = Math.min(1, buffer[l]) * 0x7FFF;
-        }
-        return buf.buffer;
-    }
+    //function convertFloat32ToInt16(buffer) {
+    //    l = buffer.length;
+    //    buf = new Int16Array(l);
+    //    while (l--) {
+    //        buf[l] = Math.min(1, buffer[l]) * 0x7FFF;
+    //    }
+    //    return buf.buffer;
+    //}
 
     /**
     * Most of this code is copied wholesale from https://github.com/mattdiamond/Recorderjs
@@ -22,7 +22,7 @@
         
         var worker = new Worker(WORKER_PATH);
         worker.onmessage = function (msg) {
-            if (msg === "Id-Received") {
+            if (msg.data === "Id-Received") {
                 readyCallback();
             }
         };
@@ -47,7 +47,7 @@
              
             worker.postMessage({
                 command: 'record',
-                samples: convertFloat32ToInt16(sample)
+                samples: sample
             });
         }
 

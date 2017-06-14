@@ -26,8 +26,6 @@ C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Accord.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Accord.Video.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Accord.Video.FFMPEG.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Antlr3.Runtime.dll
-C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Microsoft.AspNet.SignalR.Core.dll
-C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Microsoft.AspNet.SignalR.SystemWeb.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Microsoft.Owin.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Microsoft.Owin.Host.SystemWeb.dll
@@ -49,8 +47,6 @@ C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\WebGrease.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Accord.xml
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Accord.Video.xml
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Accord.Video.FFMPEG.xml
-C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Microsoft.AspNet.SignalR.Core.xml
-C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Microsoft.AspNet.SignalR.SystemWeb.xml
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.xml
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Microsoft.Owin.xml
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\Microsoft.Owin.Host.SystemWeb.xml
@@ -70,3 +66,5 @@ C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\System.Web.Http.WebHost.xm
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\obj\x86\Debug\WebRTCPOC.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\obj\x86\Debug\WebRTCPOC.pdb
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\obj\x86\Debug\WebRTCPOC.csprojResolveAssemblyReference.cache
+C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\NAudio.dll
+C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\NAudio.xml

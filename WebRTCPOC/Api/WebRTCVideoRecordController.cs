@@ -17,7 +17,7 @@ namespace WebRTCPOC.Api
     public class WebRTCVideoRecordController : ApiController
     {
         private string _id;
-        private int i;
+     
         public HttpResponseMessage Get()
         {
             if (HttpContext.Current.IsWebSocketRequest)
@@ -33,25 +33,45 @@ namespace WebRTCPOC.Api
 
             while (true)
             {
-                if (socket.State == WebSocketState.Open)
+                try
                 {
-                    if (!idReceived)
+                    if (socket.State == WebSocketState.Open)
                     {
-                        await ReceiveIdAsync(socket);
-                        idReceived = true;
-                        RecordMemory.CreateWriter(_id);
+                        if (!idReceived)
+                        {
+                            await ReceiveIdAsync(socket);
+                            idReceived = true;
+                            RecordMemory.CreateWriter(_id);
+                        }
+                        else
+                        {
+                            await ReceiveFrameAsync(socket);
+                        }
                     }
                     else
                     {
-                        await ReceiveFrameAsync(socket);
+                        RecordMemory.VideoReady(_id);
+                     
+                       
+                        break;
+
                     }
                 }
-                else
+
+                catch (Exception ex)
                 {
-                    RecordMemory.CloseWriter(_id);
-                    break;
+                    var x = ex;
                 }
             }
+        }
+
+        public byte[] TrimEnd(byte[] array)
+        {
+            int lastIndex = Array.FindLastIndex(array, b => b != 0);
+
+            Array.Resize(ref array, lastIndex + 1);
+
+            return array;
         }
 
         private async Task ReceiveFrameAsync(WebSocket socket)
@@ -69,7 +89,7 @@ namespace WebRTCPOC.Api
                 } while (!result.EndOfMessage);
 
                 byte[] frame = frameParts.SelectMany(x => x).ToArray();
-                RecordMemory.AppendVideoFrame(_id, new System.Drawing.Bitmap(new MemoryStream(frame)));
+                RecordMemory.AppendVideoFrame(_id, new System.Drawing.Bitmap(new MemoryStream(TrimEnd(frame))));
             }
             catch (Exception ex)
             {

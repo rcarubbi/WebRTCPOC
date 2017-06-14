@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NAudio.Wave;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -16,8 +17,11 @@ namespace WebRTCPOC.Api
     {
         private string _id;
         private string _audioFilename;
-        BinaryWriter _writer;
+
+        NAudio.Wave.WaveFileWriter _writer;
         FileStream _stream;
+
+
         public HttpResponseMessage Get()
         {
             if (HttpContext.Current.IsWebSocketRequest)
@@ -26,38 +30,50 @@ namespace WebRTCPOC.Api
             }
             return new HttpResponseMessage(HttpStatusCode.SwitchingProtocols);
         }
+        public byte[] TrimEnd(byte[] array)
+        {
+            int lastIndex = Array.FindLastIndex(array, b => b != 0);
+
+            Array.Resize(ref array, lastIndex + 1);
+
+            return array;
+        }
         private async Task ProcessRecord(AspNetWebSocketContext context)
         {
             bool idReceived = false;
             WebSocket socket = context.WebSocket;
             while (true)
             {
-               
-                
+
+
                 if (socket.State == WebSocketState.Open)
                 {
                     if (!idReceived)
                     {
                         await ReceiveIdAsync(socket);
                         idReceived = true;
+
                         _stream = new FileStream(_audioFilename, FileMode.CreateNew, FileAccess.Write);
-                        _writer = new BinaryWriter(_stream);
+                        _writer = new NAudio.Wave.WaveFileWriter(_stream, WaveFormat.CreateIeeeFloatWaveFormat(44100, 1));
                     }
                     else
                     {
                         await ReceiveSamplesAsync(socket);
                     }
-                    
 
 
-                  
+
+
                 }
                 else
                 {
                     _writer.Close();
                     _writer.Dispose();
                     _writer = null;
-                    RecordMemory.AddAudio(_id, _audioFilename);
+                    while(!RecordMemory.VideoIsReady(_id))
+                    {
+                        Thread.Sleep(1000);
+                    }
                     RecordMemory.CloseWriter(_id);
                     break;
                 }
@@ -73,8 +89,8 @@ namespace WebRTCPOC.Api
                 {
                     ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[4096]);
                     result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-                    _writer.Write(buffer.Array);
-                    
+                    var bufferDecoded = TrimEnd(buffer.Array);
+                    _writer.Write(bufferDecoded, 0, bufferDecoded.Length);
                 } while (!result.EndOfMessage);
             }
             catch (Exception ex)

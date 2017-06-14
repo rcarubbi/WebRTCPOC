@@ -34,7 +34,7 @@ function WSVideoRecorder(mediaStream, wsURL, peerId, readyCallback) {
     var config = {};
     var worker = new Worker(config.workerPath || WORKER_PATH);
     worker.onmessage = function (msg) {
-        if (msg === "Id-Received")
+        if (msg.data === "Id-Received")
         {
             readyCallback();
         }

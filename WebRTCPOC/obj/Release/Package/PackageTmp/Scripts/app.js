@@ -1,7 +1,34 @@
 
+
+// stop them later
+// heartbeater.stop();
+
+function makePeerHeartbeater(peer) {
+    var timeoutId = 0;
+    function heartbeat() {
+        timeoutId = setTimeout(heartbeat, 20000);
+        if (peer.socket._wsOpen()) {
+            peer.socket.send({ type: 'HEARTBEAT' });
+        }
+    }
+    // Start 
+    heartbeat();
+    // return
+    return {
+        start: function () {
+            if (timeoutId === 0) { heartbeat(); }
+        },
+        stop: function () {
+            clearTimeout(timeoutId);
+            timeoutId = 0;
+        }
+    };
+}
+
 var localAudioRec,
     localVideoRec,
     localStream;
+var heartbeater;
 var audioContext = new AudioContext;
 
 navigator.getWebcam = ( navigator.getUserMedia ||
@@ -23,7 +50,9 @@ var peer = new Peer({
 
 // On open, set the peer id
 peer.on('open', function(){
-	$('#my-id').text(peer.id);
+    $('#my-id').text(peer.id);
+    heartbeater = makePeerHeartbeater(peer);
+   
 });
 
 peer.on('call', function(call) {
@@ -103,17 +132,21 @@ function step3(call) {
 var videoRecordTask, audioRecordTask;
 function beginRecord(id)
 {
-    var videoWebsocketUri =  "ws://" + window.location.hostname + ":" + window.location.port + "/api/WebRTCVideoRecord";
-    localVideoRec = new WSVideoRecorder(window.localStream, videoWebsocketUri, id);
-    while (!localVideoRec.ready) { }
-    setTimeout(function () { localVideoRec.record(); }, 500);
-    var audioWebsocketUri = "ws://" + window.location.hostname + ":" + window.location.port + "/api/WebRTCAudioRecord";
+    var videoWebsocketUri =  "wss://" + window.location.hostname + ":" + (window.location.port || "443") + "/api/WebRTCVideoRecord";
+    localVideoRec = new WSVideoRecorder(window.localStream, videoWebsocketUri, id, videoReady);
+   
+    var audioWebsocketUri = "wss://" + window.location.hostname + ":" + (window.location.port || "443") + "/api/WebRTCAudioRecord";
     var input = audioContext.createMediaStreamSource(window.localStream);
-    localAudioRec = new WSAudioRecorder(input, audioWebsocketUri, id);
-    while (!localAudioRec.ready) { }
-    setTimeout(function () { localAudioRec.record(); }, 500);
+    localAudioRec = new WSAudioRecorder(input, audioWebsocketUri, id, audioReady);
 }
  
+function videoReady() {
+    setTimeout(function () { localVideoRec.record(); }, 500);
+}
+function audioReady() {
+    setTimeout(function () { localAudioRec.record(); }, 500);
+}
+
 function stopRecord()
 {
     localVideoRec.stop();

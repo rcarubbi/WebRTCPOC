@@ -1,4 +1,4 @@
-﻿var ws;
+﻿var videoWs;
 function dataURItoView(dataURI) {
     // convert base64 to raw binary data held in a string
     // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
@@ -29,11 +29,11 @@ this.onmessage = function (e) {
 };
 
 function init(config) {
-    ws = new WebSocket(config.uri, "video-protocol");
-    ws.onopen = function () {
-        ws.send(config.peerId);
+    videoWs = new WebSocket(config.uri, "video-protocol");
+    videoWs.onopen = function () {
+        videoWs.send(config.peerId);
     };
-    ws.onmessage = function (msg) {
+    videoWs.onmessage = function (msg) {
         if (msg.data == "Id-Received")
         {
             postMessage(msg.data);
@@ -43,9 +43,9 @@ function init(config) {
 
 function record(uri) {
     var view = dataURItoView(uri);
-    ws.send(view);
+    videoWs.send(view);
 }
 
 function stop() {
-    ws.close();
+    videoWs.close();
 }
