@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Microsoft.Azure;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -41,7 +44,7 @@ namespace WebRTCPOC.Api
                         {
                             await ReceiveIdAsync(socket);
                             idReceived = true;
-                            RecordMemory.CreateWriter(_id);
+                            VideoRecorder.CreateWriter(_id);
                         }
                         else
                         {
@@ -50,9 +53,10 @@ namespace WebRTCPOC.Api
                     }
                     else
                     {
-                        RecordMemory.VideoReady(_id);
-                     
+                        VideoRecorder.VideoReady(_id);
+
                        
+
                         break;
 
                     }
@@ -89,7 +93,7 @@ namespace WebRTCPOC.Api
                 } while (!result.EndOfMessage);
 
                 byte[] frame = frameParts.SelectMany(x => x).ToArray();
-                RecordMemory.AppendVideoFrame(_id, new System.Drawing.Bitmap(new MemoryStream(TrimEnd(frame))));
+                VideoRecorder.AppendVideoFrame(_id, new System.Drawing.Bitmap(new MemoryStream(TrimEnd(frame))));
             }
             catch (Exception ex)
             {

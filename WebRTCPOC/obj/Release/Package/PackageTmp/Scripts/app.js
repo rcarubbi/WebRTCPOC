@@ -132,10 +132,10 @@ function step3(call) {
 var videoRecordTask, audioRecordTask;
 function beginRecord(id)
 {
-    var videoWebsocketUri =  "wss://" + window.location.hostname + ":" + (window.location.port || "443") + "/api/WebRTCVideoRecord";
+    var videoWebsocketUri = "ws://" + window.location.hostname + ":" + (window.location.port || "80") + "/api/WebRTCVideoRecord";
     localVideoRec = new WSVideoRecorder(window.localStream, videoWebsocketUri, id, videoReady);
    
-    var audioWebsocketUri = "wss://" + window.location.hostname + ":" + (window.location.port || "443") + "/api/WebRTCAudioRecord";
+    var audioWebsocketUri = "ws://" + window.location.hostname + ":" + (window.location.port || "80") + "/api/WebRTCAudioRecord";
     var input = audioContext.createMediaStreamSource(window.localStream);
     localAudioRec = new WSAudioRecorder(input, audioWebsocketUri, id, audioReady);
 }
