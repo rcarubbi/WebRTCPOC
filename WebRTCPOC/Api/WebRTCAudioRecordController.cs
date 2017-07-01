@@ -1,8 +1,6 @@
-﻿using Microsoft.Azure;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
-using NAudio.Wave;
+﻿using AVRecordManager;
 using System;
+using System.Configuration;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -18,13 +16,10 @@ namespace WebRTCPOC.Api
 {
     public class WebRTCAudioRecordController : ApiController
     {
+
         private string _id;
-        private string _audioFilename;
-
-        WaveFileWriter _audioWriter;
-        FileStream _stream;
-
-
+        private MemoryStream _buffer;
+        private BlobStorageManager _manager;
         public HttpResponseMessage Get()
         {
             if (HttpContext.Current.IsWebSocketRequest)
@@ -33,114 +28,72 @@ namespace WebRTCPOC.Api
             }
             return new HttpResponseMessage(HttpStatusCode.SwitchingProtocols);
         }
-        public byte[] TrimEnd(byte[] array)
-        {
-            int lastIndex = Array.FindLastIndex(array, b => b != 0);
 
-            Array.Resize(ref array, lastIndex + 1);
-
-            return array;
-        }
         private async Task ProcessRecord(AspNetWebSocketContext context)
         {
-            try
+
+            WebSocket socket = context.WebSocket;
+            while (true)
             {
-                bool idReceived = false;
-                WebSocket socket = context.WebSocket;
-                while (true)
+                if (socket.State == WebSocketState.Open)
                 {
-
-
-                    if (socket.State == WebSocketState.Open)
+                    if (IsIdEmpty())
                     {
-                        if (!idReceived)
-                        {
-                            await ReceiveIdAsync(socket);
-                            idReceived = true;
-
-                            _stream = new FileStream(_audioFilename, FileMode.CreateNew, FileAccess.ReadWrite);
-                            _audioWriter = new WaveFileWriter(_stream, WaveFormat.CreateIeeeFloatWaveFormat(44100, 1));
-                        }
-                        else
-                        {
-                            await ReceiveSamplesAsync(socket);
-                        }
-
-
-
-
+                        _id = await ReceiveIdAsync(socket);
+                        _buffer = new MemoryStream(int.Parse(ConfigurationManager.AppSettings["Audio.BufferSize"]));
+                        _manager = new BlobStorageManager($"{_id}.adat");
+                        _manager.OpenWrite();
                     }
                     else
                     {
-
-                        CloudStorageAccount storageAccount = CloudStorageAccount.Parse(CloudConfigurationManager.GetSetting("AzureBlobStorage.ConnectionString"));
-
-                        // Create the blob client.
-                        CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
-
-                        // Retrieve a reference to a container.
-                        CloudBlobContainer container = blobClient.GetContainerReference("webrtcpoccontainer");
-                        container.SetPermissions(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
-
-
-                        CloudBlockBlob blockBlob = container.GetBlockBlobReference(Path.GetFileName(_audioFilename));
-
-                        blockBlob.UploadFromStream(_stream);
-
-
-                        while (!VideoRecorder.VideoIsReady(_id))
+                        var samples = await ReceiveSamplesAsync(socket);
+                        if (_buffer.Position + samples.Length > _buffer.Capacity)
                         {
-                            Thread.Sleep(1000);
+                               await _manager.UploadAsync(_buffer);
                         }
-                        VideoRecorder.CloseWriter(_id);
-                        VideoRecorder.UploadVideo(_id, container);
 
-                        _audioWriter.Close();
-                        _audioWriter.Dispose();
-                        _audioWriter = null;
-                        _stream.Close();
-                        _stream.Dispose();
-                        _stream = null;
-
-                        File.Delete(_audioFilename);
-                        File.Delete(Path.ChangeExtension(_audioFilename, ".mp4"));
-                        break;
+                        _buffer.Write(samples, 0, samples.Length);
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                var x = ex;
-            }
-        }
-
-        private async Task ReceiveSamplesAsync(WebSocket socket)
-        {
-            try
-            {
-                WebSocketReceiveResult result = null;
-                do
+                else
                 {
-                    ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[4096]);
-                    result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-                    var bufferDecoded = TrimEnd(buffer.Array);
-                    _audioWriter.Write(bufferDecoded, 0, bufferDecoded.Length);
-                } while (!result.EndOfMessage);
+                    if (_buffer.Position > 0)
+                    {
+                         await  _manager.UploadAsync(_buffer);
+                    }
+
+                    _manager.Commit();
+                    _manager.Dispose();
+                    break;
+                }
             }
-            catch (Exception ex)
-            {
-                var x = ex;
-            }
+
         }
 
-        private async Task ReceiveIdAsync(WebSocket socket)
+       
+
+        private bool IsIdEmpty()
+        {
+            return string.IsNullOrWhiteSpace(_id);
+        }
+
+        private async Task<byte[]> ReceiveSamplesAsync(WebSocket socket)
+        {
+            WebSocketReceiveResult result = null;
+            ArraySegment<byte> arraySegment = new ArraySegment<byte>(new byte[4096]);
+            result = await socket.ReceiveAsync(arraySegment, CancellationToken.None);
+            var buffer = arraySegment.Array.TrimEnd();
+            return buffer;
+        }
+
+        private async Task<string> ReceiveIdAsync(WebSocket socket)
         {
             ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[1024]);
             WebSocketReceiveResult result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-            _id = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
-            _audioFilename = Path.Combine(HttpContext.Current.Server.MapPath("~/bin"), $"{_id}.wav");
+            string id = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
             buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes("Id-Received"));
             await socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+            return id;
         }
     }
 }

@@ -1,8 +1,7 @@
-﻿using Microsoft.Azure;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
+﻿using AVRecordManager;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -20,7 +19,11 @@ namespace WebRTCPOC.Api
     public class WebRTCVideoRecordController : ApiController
     {
         private string _id;
-     
+        private MemoryStream _buffer;
+        private MemoryStream _indexBuffer;
+        private BlobStorageManager _manager;
+        private BlobStorageManager _indexManager;
+        private StreamWriter _indexStreamWriter;
         public HttpResponseMessage Get()
         {
             if (HttpContext.Current.IsWebSocketRequest)
@@ -29,85 +32,90 @@ namespace WebRTCPOC.Api
             }
             return new HttpResponseMessage(HttpStatusCode.SwitchingProtocols);
         }
+
+
+        private bool IsIdEmpty()
+        {
+            return string.IsNullOrWhiteSpace(_id);
+        }
+
         private async Task ProcessRecord(AspNetWebSocketContext context)
         {
-            bool idReceived = false;
             WebSocket socket = context.WebSocket;
 
             while (true)
             {
-                try
+                if (socket.State == WebSocketState.Open)
                 {
-                    if (socket.State == WebSocketState.Open)
+                    if (IsIdEmpty())
                     {
-                        if (!idReceived)
-                        {
-                            await ReceiveIdAsync(socket);
-                            idReceived = true;
-                            VideoRecorder.CreateWriter(_id);
-                        }
-                        else
-                        {
-                            await ReceiveFrameAsync(socket);
-                        }
+                        _id = await ReceiveIdAsync(socket);
+                        _buffer = new MemoryStream(int.Parse(ConfigurationManager.AppSettings["Video.BufferSize"]));
+                        _indexBuffer = new MemoryStream();
+                        _indexStreamWriter = new StreamWriter(_indexBuffer);
+
+                        _manager = new BlobStorageManager($"{_id}.vdat");
+                        _manager.OpenWrite();
+
+                        _indexManager = new BlobStorageManager($"{_id}.vidx");
+                        _indexManager.OpenWrite();
                     }
                     else
                     {
-                        VideoRecorder.VideoReady(_id);
+                        var frame = await ReceiveFrameAsync(socket);
 
-                       
+                        if (_buffer.Position + frame.Length > _buffer.Capacity)
+                        {
+                            await _manager.UploadAsync(_buffer);
+                            await _indexManager.UploadAsync(_indexBuffer);
+                        }
 
-                        break;
+                        await _buffer.WriteAsync(frame, 0, frame.Length);
+                        await _indexStreamWriter.WriteLineAsync(frame.Length.ToString());
 
                     }
                 }
-
-                catch (Exception ex)
+                else
                 {
-                    var x = ex;
+                    if (_buffer.Position > 0)
+                    {
+                        await _manager.UploadAsync(_buffer);
+                        await _indexManager.UploadAsync(_indexBuffer);
+                    }
+
+                    _manager.Commit();
+                    _indexManager.Commit();
+                    _manager.Dispose();
+                    _indexManager.Dispose();
+
+                    break;
                 }
             }
         }
 
-        public byte[] TrimEnd(byte[] array)
+        private async Task<byte[]> ReceiveFrameAsync(WebSocket socket)
         {
-            int lastIndex = Array.FindLastIndex(array, b => b != 0);
+            List<byte[]> frameParts = new List<byte[]>();
+            WebSocketReceiveResult result = null;
+            do
+            {
+                ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[6144]);
+                result = await socket.ReceiveAsync(buffer, CancellationToken.None);
+                frameParts.Add(buffer.Array);
+            } while (!result.EndOfMessage);
 
-            Array.Resize(ref array, lastIndex + 1);
-
-            return array;
+            byte[] frame = frameParts.SelectMany(x => x).ToArray().TrimEnd();
+            return frame;
         }
 
-        private async Task ReceiveFrameAsync(WebSocket socket)
-        {
-            try
-            {
-
-                List<byte[]> frameParts = new List<byte[]>();
-                WebSocketReceiveResult result = null;
-                do
-                {
-                    ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[1024]);
-                    result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-                    frameParts.Add(buffer.Array);
-                } while (!result.EndOfMessage);
-
-                byte[] frame = frameParts.SelectMany(x => x).ToArray();
-                VideoRecorder.AppendVideoFrame(_id, new System.Drawing.Bitmap(new MemoryStream(TrimEnd(frame))));
-            }
-            catch (Exception ex)
-            {
-                var x = ex;
-            }
-        }
-
-        private async Task ReceiveIdAsync(WebSocket socket)
+        private async Task<string> ReceiveIdAsync(WebSocket socket)
         {
             ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[1024]);
             WebSocketReceiveResult result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-            _id = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
+            string id = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
             buffer = new ArraySegment<byte>(Encoding.UTF8.GetBytes("Id-Received"));
             await socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+            return id;
         }
     }
 }

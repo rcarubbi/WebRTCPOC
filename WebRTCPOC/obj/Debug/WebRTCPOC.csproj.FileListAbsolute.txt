@@ -166,3 +166,6 @@ C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\ko\System.Spatial.resource
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\ru\System.Spatial.resources.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\zh-Hans\System.Spatial.resources.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\zh-Hant\System.Spatial.resources.dll
+C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\ffmpeg.exe
+C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\VideoReader.dll
+C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin\VideoReader.pdb
