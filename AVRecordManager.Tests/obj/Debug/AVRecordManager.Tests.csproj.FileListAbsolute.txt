@@ -9,7 +9,9 @@ C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\swscale-
 C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.Interface.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll
+C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\ffmpeg.exe
 C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\Accord.dll.config
+C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\AVRecordManager.Tests.dll.config
 C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\AVRecordManager.Tests.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\AVRecordManager.Tests.pdb
 C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.dll
@@ -82,5 +84,3 @@ C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\zh-Hant\
 C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\obj\Debug\AVRecordManager.Tests.csprojResolveAssemblyReference.cache
 C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\obj\Debug\AVRecordManager.Tests.dll
 C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\obj\Debug\AVRecordManager.Tests.pdb
-C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\AVRecordManager.Tests.dll.config
-C:\Users\Raphael\Source\Repos\WebRTCPOC\AVRecordManager.Tests\bin\Debug\ffmpeg.exe

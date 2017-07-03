@@ -133,19 +133,13 @@ var videoRecordTask, audioRecordTask;
 function beginRecord(id)
 {
     var videoWebsocketUri = "ws://" + window.location.hostname + ":" + (window.location.port || "80") + "/api/WebRTCVideoRecord";
-    localVideoRec = new WSVideoRecorder(window.localStream, videoWebsocketUri, id, videoReady);
+    localVideoRec = new WSVideoRecorder(window.localStream, videoWebsocketUri, id);
    
     var audioWebsocketUri = "ws://" + window.location.hostname + ":" + (window.location.port || "80") + "/api/WebRTCAudioRecord";
     var input = audioContext.createMediaStreamSource(window.localStream);
-    localAudioRec = new WSAudioRecorder(input, audioWebsocketUri, id, audioReady);
+    localAudioRec = new WSAudioRecorder(input, audioWebsocketUri, id);
 }
  
-function videoReady() {
-    setTimeout(function () { localVideoRec.record(); }, 500);
-}
-function audioReady() {
-    setTimeout(function () { localAudioRec.record(); }, 500);
-}
 
 function stopRecord()
 {

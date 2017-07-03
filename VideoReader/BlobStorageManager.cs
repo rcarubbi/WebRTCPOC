@@ -7,14 +7,14 @@ using System;
 
 namespace AVRecordManager
 {
-    public class BlobStorageManager : IDisposable
+    public class BlobStorageManager 
     {
         
         private CloudStorageAccount _storageAccount;
         private CloudBlobClient _blobClient;
         private CloudBlobContainer _container;
         private CloudBlockBlob _blobBlock;
-        private CloudBlobStream _stream;
+      
 
         public BlobStorageManager(string filename)
         {
@@ -34,30 +34,19 @@ namespace AVRecordManager
             return _blobBlock.OpenRead();
         }
 
-        public void OpenWrite()
+        public Stream OpenWrite()
         {
-            _stream = _blobBlock.OpenWrite();
+            return _blobBlock.OpenWrite(); 
         }
 
-        public async Task UploadAsync(MemoryStream buffer)
+        public void Commit(Stream stream)
         {
-            await _stream.WriteAsync(buffer.ToArray(), 0, buffer.ToArray().Length);
-            buffer.Clear();
-        }
-
-        public void Commit()
-        {
-            _stream.Commit();
-        }
-
-        public void Dispose()
-        {
-            if (_stream != null)
+            if (stream is CloudBlobStream)
             {
-                _stream.Close();
-                _stream.Dispose();
-                _stream = null;
+                (stream as CloudBlobStream).Commit();
             }
         }
+        
+        
     }
 }

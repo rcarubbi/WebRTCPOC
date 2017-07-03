@@ -1,28 +1,13 @@
 ﻿
 var WORKER_PATH = 'scripts/videoWorker.js';
-
-function dataURItoView(dataURI) {
-    // convert base64 to raw binary data held in a string
-    // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
-    var byteString = atob(dataURI.split(',')[1]);
-
-    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-    var ab = new ArrayBuffer(byteString.length);
-    var view = new DataView(ab);
-    var ia = new Uint8Array(ab);
-    for (var i = 0; i < byteString.length; i++) {
-        view.setUint8(i, byteString.charCodeAt(i), true);
-    }
-    return view;
-}
-
+ 
 /*Some of this code is taken wholesale from WhammyRecorder.js
 * However, images are not encoded to webp format in JS and are instead pushed through a webSocket
 * for performance improvements.
 * Some hipster may read this and think that JavaScript is practically as fast as
 * C or C++, well, you are an idiot mister hipster
 **/
-function WSVideoRecorder(mediaStream, wsURL, peerId, readyCallback) {
+function WSVideoRecorder(mediaStream, wsURL, peerId) {
     var recording = false;
      
     var previousImage; //so that we do not burden the network or receiver with dupes.
@@ -32,20 +17,8 @@ function WSVideoRecorder(mediaStream, wsURL, peerId, readyCallback) {
 
     
     var config = {};
-    var worker = new Worker(config.workerPath || WORKER_PATH);
-    worker.onmessage = function (msg) {
-        if (msg.data === "Id-Received")
-        {
-            readyCallback();
-        }
-    };
+    var worker = new Worker((config.workerPath || WORKER_PATH) + '?' + (Math.random() * 1000000));
 
-    worker.postMessage({
-        command: 'init',
-        config: {
-            uri: wsURL, peerId: peerId
-        }
-    });
     this.record = function () {
         recording = true;
 
@@ -107,6 +80,19 @@ function WSVideoRecorder(mediaStream, wsURL, peerId, readyCallback) {
             lastFrameTime = time;
         })();
     };
+    var that = this;
+    worker.onmessage = function (msg) {
+        if (msg.data === "Id-Received") {
+            that.record();
+        }
+    };
+
+    worker.postMessage({
+        command: 'init',
+        config: {
+            uri: wsURL, peerId: peerId
+        }
+    });
 
     this.stop = function () {
         recording = false;
@@ -129,4 +115,7 @@ function WSVideoRecorder(mediaStream, wsURL, peerId, readyCallback) {
 
     var lastAnimationFrame = null;
     var startTime, endTime, lastFrameTime;
+
+    
+  
 }

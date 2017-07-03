@@ -1,7 +1,6 @@
 ﻿using AVRecordManager;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -19,11 +18,9 @@ namespace WebRTCPOC.Api
     public class WebRTCVideoRecordController : ApiController
     {
         private string _id;
-        private MemoryStream _buffer;
-        private MemoryStream _indexBuffer;
+        private Stream _stream;
         private BlobStorageManager _manager;
-        private BlobStorageManager _indexManager;
-        private StreamWriter _indexStreamWriter;
+        private StreamWriter _sw;
         public HttpResponseMessage Get()
         {
             if (HttpContext.Current.IsWebSocketRequest)
@@ -50,62 +47,48 @@ namespace WebRTCPOC.Api
                     if (IsIdEmpty())
                     {
                         _id = await ReceiveIdAsync(socket);
-                        _buffer = new MemoryStream(int.Parse(ConfigurationManager.AppSettings["Video.BufferSize"]));
-                        _indexBuffer = new MemoryStream();
-                        _indexStreamWriter = new StreamWriter(_indexBuffer);
-
                         _manager = new BlobStorageManager($"{_id}.vdat");
-                        _manager.OpenWrite();
-
-                        _indexManager = new BlobStorageManager($"{_id}.vidx");
-                        _indexManager.OpenWrite();
+                        _stream = _manager.OpenWrite();
+                        _sw = new StreamWriter(_stream);
                     }
                     else
                     {
                         var frame = await ReceiveFrameAsync(socket);
-
-                        if (_buffer.Position + frame.Length > _buffer.Capacity)
-                        {
-                            await _manager.UploadAsync(_buffer);
-                            await _indexManager.UploadAsync(_indexBuffer);
-                        }
-
-                        await _buffer.WriteAsync(frame, 0, frame.Length);
-                        await _indexStreamWriter.WriteLineAsync(frame.Length.ToString());
-
+                        await _sw.WriteLineAsync(frame);
                     }
                 }
                 else
                 {
-                    if (_buffer.Position > 0)
-                    {
-                        await _manager.UploadAsync(_buffer);
-                        await _indexManager.UploadAsync(_indexBuffer);
-                    }
-
-                    _manager.Commit();
-                    _indexManager.Commit();
-                    _manager.Dispose();
-                    _indexManager.Dispose();
-
+                    _manager.Commit(_stream);
+                    _sw.Close();
+                    _sw.Dispose();
+                    _sw = null;
+                    _stream.Close();
+                    _stream.Dispose();
+                    _stream = null;
                     break;
                 }
             }
         }
 
-        private async Task<byte[]> ReceiveFrameAsync(WebSocket socket)
+        private async Task<string> ReceiveFrameAsync(WebSocket socket)
         {
-            List<byte[]> frameParts = new List<byte[]>();
+            List<byte[]> base64BufferParts = new List<byte[]>();
             WebSocketReceiveResult result = null;
             do
             {
-                ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[6144]);
+                ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[8000]);
                 result = await socket.ReceiveAsync(buffer, CancellationToken.None);
-                frameParts.Add(buffer.Array);
+                base64BufferParts.Add(buffer.Array);
             } while (!result.EndOfMessage);
 
-            byte[] frame = frameParts.SelectMany(x => x).ToArray().TrimEnd();
-            return frame;
+            byte[] base64Buffer = base64BufferParts.SelectMany(x => x).ToArray().TrimEnd();
+           
+            using (var ms = new MemoryStream(base64Buffer))
+            using (var sr = new StreamReader(ms))
+            {
+                return sr.ReadToEnd();    
+            }
         }
 
         private async Task<string> ReceiveIdAsync(WebSocket socket)

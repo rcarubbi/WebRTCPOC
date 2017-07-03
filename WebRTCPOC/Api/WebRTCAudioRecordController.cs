@@ -1,6 +1,5 @@
 ﻿using AVRecordManager;
 using System;
-using System.Configuration;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -18,7 +17,7 @@ namespace WebRTCPOC.Api
     {
 
         private string _id;
-        private MemoryStream _buffer;
+        private Stream _stream;
         private BlobStorageManager _manager;
         public HttpResponseMessage Get()
         {
@@ -40,30 +39,25 @@ namespace WebRTCPOC.Api
                     if (IsIdEmpty())
                     {
                         _id = await ReceiveIdAsync(socket);
-                        _buffer = new MemoryStream(int.Parse(ConfigurationManager.AppSettings["Audio.BufferSize"]));
+                        
                         _manager = new BlobStorageManager($"{_id}.adat");
-                        _manager.OpenWrite();
+                        _stream = _manager.OpenWrite();
                     }
                     else
                     {
                         var samples = await ReceiveSamplesAsync(socket);
-                        if (_buffer.Position + samples.Length > _buffer.Capacity)
-                        {
-                               await _manager.UploadAsync(_buffer);
-                        }
-
-                        _buffer.Write(samples, 0, samples.Length);
+                        _stream.Write(samples, 0, samples.Length);
                     }
                 }
                 else
                 {
-                    if (_buffer.Position > 0)
-                    {
-                         await  _manager.UploadAsync(_buffer);
-                    }
+                   
 
-                    _manager.Commit();
-                    _manager.Dispose();
+                    _manager.Commit(_stream);
+                    _stream.Close();
+                    _stream.Dispose();
+                    _stream = null;
+
                     break;
                 }
             }
