@@ -24,7 +24,7 @@ function makePeerHeartbeater(peer) {
         }
     };
 }
-var userInfoAPI = root + "/api/User";
+var userInfoAPI = "http://" + window.location.hostname + ":" + (window.location.port || "443") + "/api/User";
 var localAudioRec,
     localVideoRec,
     localStream;
