@@ -11,7 +11,7 @@ namespace AVRecordManager.Tests
         public async Task RecoverVideoFromCaller()
         {
             var fr = new AVFileReader(@"C:\Users\Raphael\Source\Repos\WebRTCPOC\WebRTCPOC\bin");
-            var fs = await fr.ReadVideo("l3zui0aesk000000.vdat");
+            var fs = await fr.ReadVideo("z4gi1dfqgkl00000.vdat");
             fs.Close();
             fs.Dispose();
         }

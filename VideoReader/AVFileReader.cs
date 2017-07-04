@@ -20,54 +20,55 @@ namespace AVRecordManager
                 _workspace = workspace;
         }
 
-        
+
 
         public async Task<FileStream> ReadVideo(string filename)
         {
+
             BlobStorageManager videoStorageManager = new BlobStorageManager(filename);
-            var videoStream = videoStorageManager.OpenRead();
-            var sr = new StreamReader(videoStream);
             string outputFullPath = Path.Combine(_workspace, Path.ChangeExtension(filename, ".mp4"));
 
-            using (VideoFileWriter videoWriter = new VideoFileWriter())
-            { 
-                videoWriter.Open(outputFullPath, 320, 240, 10, VideoCodec.MPEG4, 16000, AudioCodec.MP3, 44100 * 16, 44100, 1);
-                string length = string.Empty;
+            using (var videoStream = videoStorageManager.OpenRead())
+            using (var sr = new StreamReader(videoStream))
+            {
                 var i = 0;
+                var directory = Path.Combine(_workspace, "temp");
+                Directory.CreateDirectory(directory);
                 do
                 {
                     try
                     {
                         using (var frame = await ReadFrameAsync(sr))
                         {
-                            //  frame.Save($"{i}.jpg");
-                            i++;
-                            videoWriter.WriteVideoFrame(frame);
+                            frame.Save(Path.Combine(directory, $"img{i.ToString().PadLeft(10, '0')}.jpg"));
                         }
                     }
                     catch { }
+                    i++;
                 } while (!sr.EndOfStream);
+                MakeVideo(directory, outputFullPath);
+            
+                Directory.Delete(directory, true);
             }
 
-           
-            
+
             var outputFullPathAudio = ReadAudio(Path.ChangeExtension(filename, ".adat"));
-
-            
             MergeAV(outputFullPath, outputFullPathAudio);
-
-            sr.Close();
-            sr.Dispose();
-            sr = null;
-            videoStream.Close();
-            videoStream.Dispose();
-            videoStream = null;
 
             FileStream fs = new FileStream(outputFullPath, FileMode.Open);
             return fs;
         }
 
+        private void MakeVideo(string imagesDirectory, string output)
+        {
 
+            var p = Process.Start("ffmpeg.exe", $"-framerate 10/1 -i {imagesDirectory}\\img%10d.jpg {output}");
+
+            p.WaitForExit();
+           
+        }
+
+       
 
         private void MergeAV(string outputFullPath, string outputFullPathAudio)
         {
@@ -81,13 +82,13 @@ namespace AVRecordManager
         private string ReadAudio(string filename)
         {
             string outputFullPathAudio = Path.Combine(_workspace, Path.ChangeExtension(filename, ".wav"));
-          
+
 
             BlobStorageManager audioStorageManager = new BlobStorageManager(filename);
             var audioStream = audioStorageManager.OpenRead();
 
- 
-          
+
+
             using (FileStream audioFs = new FileStream(outputFullPathAudio, FileMode.Create))
             using (WaveFileWriter audioWriter = new WaveFileWriter(audioFs, WaveFormat.CreateIeeeFloatWaveFormat(44100, 1)))
             {
@@ -105,7 +106,7 @@ namespace AVRecordManager
         private async Task<Bitmap> ReadFrameAsync(StreamReader sr)
         {
             var base64 = await sr.ReadLineAsync();
-            return new Bitmap(new MemoryStream(Convert.FromBase64String(base64.Split(',')[1])));
+            return new Bitmap(new MemoryStream(Convert.FromBase64String(base64)));
         }
     }
 }
